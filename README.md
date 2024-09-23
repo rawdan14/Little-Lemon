@@ -35,7 +35,7 @@ To set up the database, do the following:
 
 1. **Install MySQL**: Download and install MySQL on your machine if you haven't done so.
 
-2. **Populate the data using sql**:insert data using insert to clause ![Data](./Prepartion/Inserting Data.sql) .
+2. **Populate the data using sql**:insert data using insert to clause ![Data](./Prepartion/InsertingData.sql)
 
 Your database should now be set up and populated with tables and stored procedures.
 
