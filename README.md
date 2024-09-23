@@ -51,14 +51,10 @@ Your database should now be set up and populated with tables and stored procedur
 This stored procedure retrieves the maximum quantity of a specific item that has been ordered. It's useful for inventory management.
 
 ```sql
-CREATE PROCEDURE GetMaxQuantity()
+CREATE PROCEDURE `GetMaxQuantity`()
 BEGIN
-  DECLARE maxQty INT;
-
-  SELECT MAX(Quantity) INTO maxQty FROM `LittleLemonDB`.`Orders`;
-
-  SELECT maxQty AS 'Maximum Ordered Quantity';
-END;
+	SELECT MAX(Quantity)  FROM orders;
+END
 ```
 
 ```sql
@@ -70,24 +66,22 @@ CALL GetMaxQuantity()
 The CheckBooking stored procedure validates whether a table is already booked on a specified date. It will output a status message indicating whether the table is available or already booked.
 
 ```sql
-CREATE PROCEDURE `LittleLemonDB`.`CheckBooking`(IN booking_date DATE, IN table_number INT)
+CREATE PROCEDURE `CheckBooking`(book_date DATE, table_num INT)
 BEGIN
-    DECLARE table_status VARCHAR(50);
-
-    SELECT COUNT(*) INTO @table_count
-    FROM `LittleLemonDB`.`Bookings`
-    WHERE `Date` = booking_date AND `TableNumber` = table_number;
-
-    IF (@table_count > 0) THEN
-        SET table_status = 'Table is already booked.';
-    ELSE
-        SET table_status = 'Table is available.';
+DECLARE table_booked INT DEFAULT 0;
+SELECT 
+    COUNT(table_booked)
+INTO table_booked FROM
+    bookings
+WHERE
+    BookingDate = book_date
+        AND TableNumber = table_num;
+    IF table_booked > 0 THEN
+      SELECT CONCAT( "Table ",table_num, " is already booked on",   book_date,".") AS "Booking status";
+      ELSE 
+      SELECT CONCAT( "Table ",table_num," is not booked on",  book_date,".") AS "Booking status";
     END IF;
-
-    SELECT table_status AS 'Table Status';
-END;
-```
-
+END
 ```sql
 CALL CheckBooking('2022-11-12', 3);
 ```
@@ -95,13 +89,13 @@ CALL CheckBooking('2022-11-12', 3);
 This stored procedure updates the booking details in the database. It takes the booking ID and new booking date as parameters, making sure the changes are reflected in the system.
 
 ```sql
-CREATE PROCEDURE `LittleLemonDB`.`UpdateBooking`(
+CREATE PROCEDURE `UpdateBooking`(
     IN booking_id_to_update INT, 
     IN new_booking_date DATE)
 BEGIN
-    UPDATE `LittleLemonDB`.`Bookings`
+    UPDATE `Bookings`
     SET `Date` = new_booking_date
-    WHERE `BookingID` = booking_id_to_update;
+    WHERE `BookinID` = booking_id_to_update;
 
     SELECT CONCAT('Booking ', booking_id_to_update, ' updated') AS 'Confirmation';
 END;
@@ -114,7 +108,7 @@ CALL `LittleLemonDB`.`UpdateBooking`(9, '2022-11-15');
 This procedure adds a new booking to the system. It accepts multiple parameters like booking ID, customer ID, booking date, and table number to complete the process.
 
 ```sql
-CREATE PROCEDURE `LittleLemonDB`.`AddBooking`(
+CREATE PROCEDURE `AddBooking`(
     IN new_booking_id INT, 
     IN new_customer_id INT, 
     IN new_booking_date DATE, 
@@ -122,9 +116,9 @@ CREATE PROCEDURE `LittleLemonDB`.`AddBooking`(
     IN new_staff_id INT)
 BEGIN
     INSERT INTO `LittleLemonDB`.`Bookings`(
-        `BookingID`, 
+        `BookinID`, 
         `CustomerID`, 
-        `Date`, 
+        `BookingDate`, 
         `TableNumber`, 
         `StaffID`)
     VALUES(
@@ -145,10 +139,10 @@ CALL `LittleLemonDB`.`AddBooking`(17, 1, '2022-10-10', 5, 2);
 ### CancelBooking()
 This stored procedure deletes a specific booking from the database, allowing for better management and freeing up resources.
 ```sql
-CREATE PROCEDURE `LittleLemonDB`.`CancelBooking`(IN booking_id_to_cancel INT)
+CREATE PROCEDURE `CancelBooking`(IN booking_id_to_cancel INT)
 BEGIN
-    DELETE FROM `LittleLemonDB`.`Bookings`
-    WHERE `BookingID` = booking_id_to_cancel;
+    DELETE FROM `little-lemon`.`Bookings`
+    WHERE `BookinID` = booking_id_to_cancel;
 
     SELECT CONCAT('Booking ', booking_id_to_cancel, ' cancelled') AS 'Confirmation';
 END;
@@ -160,26 +154,28 @@ CALL `LittleLemonDB`.`CancelBooking`(9);
 The AddValidBooking stored procedure aims to securely add a new table booking record. It starts a transaction and attempts to insert a new booking record, checking the table's availability.
 
 ```sql
-CREATE PROCEDURE `LittleLemonDB`.`AddValidBooking`(IN new_booking_date DATE, IN new_table_number INT, IN new_customer_id INT, IN new_staff_id INT)
+CREATE PROCEDURE `AddValidBooking`(TableNumber INT, StaffID INT, BookingDate DATE, CustomerID CHAR(11))
 BEGIN
-    DECLARE table_status INT;
-    START TRANSACTION;
+START TRANSACTION;
+	SELECT 1 AS 'status'
+	FROM bookings 
+	WHERE BookingDate = BookingDate
+	AND TableNumber = TableNumber
+	LIMIT 1
+	INTO @booking_status;
 
-    SELECT COUNT(*) INTO table_status
-    FROM `LittleLemonDB`.`Bookings`
-    WHERE `Date` = new_booking_date AND `TableNumber` = new_table_number;
+IF @booking_status = 1 THEN
+	ROLLBACK;
+	SELECT CONCAT("A client has already booked table ", TableNumber, " on ", BookingDate,  ". Cannot add booking. Transaction cancelled.") AS 'Booking status';
 
-    IF (table_status > 0) THEN
-        ROLLBACK;
-        SELECT 'Booking could not be completed. Table is already booked on the specified date.' AS 'Status';
-    ELSE
-        INSERT INTO `LittleLemonDB`.`Bookings`(`Date`, `TableNumber`, `CustomerID`, `StaffID`)
-        VALUES(new_booking_date, new_table_number, new_customer_id, new_staff_id);
+ELSE
+	INSERT INTO bookings (table_no, booking_staff_id, booking_date, booking_customer_id) VALUES 
+	(TableNumber, StaffID, BookingID, CustomerID);
+COMMIT;
 
-        COMMIT;
-        SELECT 'Booking completed successfully.' AS 'Status';
-    END IF;
-END;
+SELECT CONCAT("Table ", table_number, " is free - booking successful.") AS 'Booking status';
+END IF;
+END
 ```
 ```sql
 CALL AddValidBooking('2022-10-10', 5, 1, 1);
@@ -190,29 +186,21 @@ CALL AddValidBooking('2022-10-10', 5, 1, 1);
 The CancelOrder stored procedure cancels or removes a specific order by its Order ID. It executes a DELETE statement to remove the order record from the Orders table.
 
 ```sql
-CREATE PROCEDURE CancelOrder(IN orderIDToDelete INT)
+CREATE PROCEDURE `CancelOrder`(IN CancelOrder1 CHAR(11))
 BEGIN
-  DECLARE orderExistence INT;
-
-  SELECT COUNT(*) INTO orderExistence FROM `LittleLemonDB`.`Orders` WHERE OrderID = orderIDToDelete;
-
-  IF orderExistence > 0 THEN
-    DELETE FROM `LittleLemonDB`.`OrderDeliveryStatuses` WHERE OrderID = orderIDToDelete;
-
-    DELETE FROM `LittleLemonDB`.`Orders` WHERE OrderID = orderIDToDelete;
-
-    SELECT CONCAT('Order ', orderIDToDelete, ' is cancelled') AS 'Confirmation';
-  ELSE
-    SELECT CONCAT('Order ', orderIDToDelete, ' does not exist') AS 'Confirmation';
-  END IF;
-END;
+	DELETE FROM orders WHERE orderID = CancelOrder1;	
+	SELECT 
+    CONCAT('Order number ',
+            CancelOrder1,
+            ' has been cancelled.') AS Confirmation;    
+END
 ```
 ```sql
 CALL CancelOrder(5);
 ```
 
 ## Data Analysis with Tableau
-A Tableau workbook has been created, containing various charts and dashboards to facilitate data analysis. Download the workbook [here](./tableau.twb)
+A Tableau workbook has been created, containing various charts and dashboards to facilitate data analysis.
 
 ### Customers sales
 ![Customers sales](./images/tableau-task1.png)
