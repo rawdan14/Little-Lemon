@@ -211,3 +211,122 @@ A Tableau workbook has been created, containing various charts and dashboards to
 ### Dashboard
 ![dashboard](./images/tableau-task5.png)
 
+## Python Client
+
+### Establishing a Connection
+
+- Installed the necessary Python libraries, including `mysql-connector`.
+- Established a connection between Python and the MySQL database using the `connector` API.
+- Created a cursor object to communicate with the entire MySQL database.
+- Set the `LittleLemonDB` database for use.
+
+- Importing MySQL Connector/Python 
+
+```Python
+import mysql.connector as connector
+from mysql.connector import Error
+```
+
+- Establishing connection between Python and MySQL database via connector API
+
+``` Python
+try:
+    connection=connector.connect(user="root",password="")
+except Error as er:
+    print(er.msg)
+
+print("Connection between MySQL and Python is established.\n")
+```
+
+- Creating a Cursor :
+
+```
+cursor = connection.cursor()
+print("Cursor is created to communicate with the MySQL using Python.")
+```
+
+- Setting the Database for use :
+```
+cursor.execute("USE LittleLemonDB")
+connection.database
+print("The database LittleLemonDB is set for use.")
+```
+
+### Querying the Database
+
+A query was executed to display all tables within the `LittleLemonDB` database.
+```
+show_tables_query = "SHOW TABLES;" 
+
+cursor.execute(show_tables_query)
+
+results=cursor.fetchall()
+
+columns=cursor.column_names
+
+print(columns)
+for result in results:
+    print(result)
+```
+
+### Query with Table JOIN
+
+In this task, a specific query was implemented to retrieve the full
+name, contact details, and order information for every customer who
+placed an order greater than $60. This information will be used for a
+promotional campaign by Little Lemon.
+
+```
+join_query = """ SELECT Customer.FullName,
+Customer.ContactNumber,
+Customer.Email,
+Orders.TotalCost
+FROM Customer
+LEFT JOIN Orders
+ON Customer.CustomerID = Orders.CustomerID
+WHERE Orders.TotalCost > 60;
+```
+
+```
+cursor.execute(join_query)
+```
+
+Fetching the results in a variable called "results".
+
+```
+results = cursor.fetchall()
+```
+
+Extracting the names of the columns.
+
+```
+columns=cursor.column_names
+```
+Printing the names of the columns and the stored data using the "for" loop.
+
+```
+print(columns)
+for result in results:
+    print(result)
+```
+
+Closing the Connection between Python and MySQL database.
+
+```
+if connection.is_connected():
+    cursor.close()
+    print("The cursor is closed.")
+    connection.close()
+    print("MySQL connection is closed.")
+else:
+    print("Connection is already closed")
+```
+
+## Conclusion
+
+This capstone project successfully delivered a comprehensive booking
+system for Little Lemon Company, complete with a robust relational
+database, optimized queries, data analysis capabilities, and a Python
+client for seamless data management. The system is designed to
+streamline operations, enhance customer experience, and enable
+data-driven decision-making for the restaurant chain.
