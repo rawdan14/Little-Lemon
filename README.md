@@ -18,6 +18,11 @@
     - [Sales Bubble Chart](#sales-bubble-chart)
     - [Cuisine Sales and Profits](#cuisine-sales-and-profits)
     - [Dashboard](#dashboard)
+ - [Python Client](#python-client)
+    - [Establishing a Connection](#establishing-a-connection)
+    - [Querying the Database](#querting-the-database)
+    - [Query with Table JOIN](#query-with-table)
+    - [Conclusion](#conclusion)
 
 ## Project Description
 
