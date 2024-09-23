@@ -27,7 +27,7 @@ This project is designed to manage the operations of the Little Lemon fast-food 
 
 To view the Entity-Relationship Diagram, click here or see the image below.
 
-![Diagram](./Images/diagram.png)
+![Diagram](./images/diagram.png)
 
 ## Installation and Setup
 
@@ -35,13 +35,7 @@ To set up the database, do the following:
 
 1. **Install MySQL**: Download and install MySQL on your machine if you haven't done so.
 
-2. **Download SQL File**: Obtain the [LittleLemonDB.sql](./LittleLemonDB.sql) file from this repository.
-
-3. **Import and Execute in MySQL Workbench**:
-    - Open MySQL Workbench.
-    - Navigate to `Server` > `Data Import`.
-    - Choose `Import from Self-Contained File` and load the `LittleLemonDB.sql` file.
-    - Click `Start Import` to both import and execute the SQL commands from the file.
+2. **Populate the data using sql**:insert data using insert to clause ![Data](./Prepartion/Inserting Data.sql) .
 
 Your database should now be set up and populated with tables and stored procedures.
 
